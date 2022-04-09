@@ -9,19 +9,20 @@ using UnityEngine;
 //ExtraLoot created with PluginMerge v(1.0.4.0) by MJSU @ https://github.com/dassjosh/Plugin.Merge
 namespace Oxide.Plugins
 {
-    [Info("Extra Loot", "Shady14u", "1.0.5")]
+    [Info("Extra Loot", "Shady14u", "1.0.6")]
     [Description("Add extra items (including custom) to any loot container in the game")]
     public partial class ExtraLoot : RustPlugin
     {
         #region 0.ExtraLoot.cs
-        private void SpawnLoot(StorageContainer container)
+        private void SpawnLoot(LootContainer container)
         {
             List<BaseItem> items;
-            if (!config.Containers.TryGetValue(container.ShortPrefabName, out items))
+            if (!_config.Containers.TryGetValue(container.ShortPrefabName, out items))
             {
                 return;
             }
             
+            ItemContainer component1 = container.GetComponent<StorageContainer>().inventory;
             foreach (var value in items)
             {
                 if (!(value.Chance >= UnityEngine.Random.Range(0f, 100f))) continue;
@@ -29,18 +30,22 @@ namespace Oxide.Plugins
                 var amount = Core.Random.Range(value.AmountMin, value.AmountMax + 1);
                 var shortName = value.IsBlueprint ? "blueprintbase" : value.ShortName;
                 var item = ItemManager.CreateByName(shortName, amount, value.SkinId);
-                if (item == null) continue;
+                
+                if (component1 == null || item == null) continue;
                 
                 item.name = value.DisplayName;
                 item.blueprintTarget = value.IsBlueprint ? ItemManager.FindItemDefinition(value.ShortName).itemid : 0;
-                container.inventory.capacity++;
-                item.MoveToContainer(container.inventory);
+                
+                component1.itemList.Add(item);
+                component1.capacity++;
+                item.parent = component1;
+                item.MarkDirty();
             }
         }
         #endregion
 
         #region 1.ExtraLoot.Config.cs
-        private static Configuration config;
+        private static Configuration _config;
         
         public class Configuration
         {
@@ -141,8 +146,8 @@ namespace Oxide.Plugins
             base.LoadConfig();
             try
             {
-                config = Config.ReadObject<Configuration>();
-                if (config == null) LoadDefaultConfig();
+                _config = Config.ReadObject<Configuration>();
+                if (_config == null) LoadDefaultConfig();
                 SaveConfig();
             }
             catch (Exception e)
@@ -153,14 +158,14 @@ namespace Oxide.Plugins
             }
         }
         
-        protected override void LoadDefaultConfig() => config = Configuration.DefaultConfig();
-        protected override void SaveConfig() => Config.WriteObject(config);
+        protected override void LoadDefaultConfig() => _config = Configuration.DefaultConfig();
+        protected override void SaveConfig() => Config.WriteObject(_config);
         
         #endregion
         #endregion
 
         #region 5.ExtraLoot.Hooks.cs
-        private void OnLootSpawn(StorageContainer container)
+        private void OnLootSpawn(LootContainer container)
         {
             NextTick(() => { SpawnLoot(container); });
         }

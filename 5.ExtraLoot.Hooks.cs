@@ -4,7 +4,7 @@
     public partial class ExtraLoot
     {
 
-        private void OnLootSpawn(StorageContainer container)
+        private void OnLootSpawn(LootContainer container)
         {
             NextTick(() => { SpawnLoot(container); });
         }

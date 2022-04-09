@@ -8,7 +8,7 @@ namespace Oxide.Plugins
     //Define:FileOrder=20
     public partial class ExtraLoot
     {
-        private static Configuration config;
+        private static Configuration _config;
 
         public class Configuration
         {
@@ -109,8 +109,8 @@ namespace Oxide.Plugins
             base.LoadConfig();
             try
             {
-                config = Config.ReadObject<Configuration>();
-                if (config == null) LoadDefaultConfig();
+                _config = Config.ReadObject<Configuration>();
+                if (_config == null) LoadDefaultConfig();
                 SaveConfig();
             }
             catch (Exception e)
@@ -121,8 +121,8 @@ namespace Oxide.Plugins
             }
         }
 
-        protected override void LoadDefaultConfig() => config = Configuration.DefaultConfig();
-        protected override void SaveConfig() => Config.WriteObject(config);
+        protected override void LoadDefaultConfig() => _config = Configuration.DefaultConfig();
+        protected override void SaveConfig() => Config.WriteObject(_config);
 
         #endregion
     }
